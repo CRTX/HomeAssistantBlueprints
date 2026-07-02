@@ -81,7 +81,10 @@ action:
             domain: mobile_app
             type: notify
             message: >-
-              🔥️ Heat set to {{ int(state_attr(climate, 'temperature')) }}° 🌡️
+              {% set user_id = trigger.to_state.context.user_id %}
+              {% set person = states.person | selectattr('attributes.user_id', '==', user_id) | first | default(none) %}
+              {% set name = person.attributes.friendly_name if person else 'system' %}
+              🔥️ Heat set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} 🌡️
             data:
               actions:
                 - action: DO_NOTHING
@@ -106,7 +109,10 @@ action:
             domain: mobile_app
             type: notify
             message: >-
-              🥶️ AC set to {{ int(state_attr(climate, 'temperature')) }}° ❄️
+              {% set user_id = trigger.to_state.context.user_id %}
+              {% set person = states.person | selectattr('attributes.user_id', '==', user_id) | first | default(none) %}
+              {% set name = person.attributes.friendly_name if person else 'system' %}
+              🥶️ AC set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} ❄️
             data:
               actions:
                 - action: DO_NOTHING
@@ -154,10 +160,4 @@ action:
             data:
               temperature: "{{ int(temp) + 1 }}"
 
-    # - conditions:
-    #     condition
-    #   sequence:
-    #     action
-    # default:
-    # action
 mode: restart
