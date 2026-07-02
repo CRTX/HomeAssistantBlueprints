@@ -65,7 +65,8 @@ action:
               {% set person = states.person | selectattr('attributes.user_id', '==', user_id) | first | default(none) %}
               {% set name = person.attributes.friendly_name if person else 'system' %}
               {% set hvac_state = states(climate) %}
-              🔥️ Climate ({{ hvac_state }} mode) set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} 🌡️
+              {% set emoji = '☀️' if hvac_state == 'cool' else '🔥' %}
+              {{ emoji }} Climate set high to {{ int(state_attr(climate, 'temperature')) }}° ({{ hvac_state }} mode) by {{ name }}
             data:
               actions:
                 - action: DO_NOTHING
@@ -91,7 +92,8 @@ action:
               {% set person = states.person | selectattr('attributes.user_id', '==', user_id) | first | default(none) %}
               {% set name = person.attributes.friendly_name if person else 'system' %}
               {% set hvac_state = states(climate) %}
-              🥶️ Climate ({{ hvac_state }} mode) set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} ❄️
+              {% set emoji = '❄️' if hvac_state == 'cool' else '🥶' %}
+              {{ emoji }} Climate set low to {{ int(state_attr(climate, 'temperature')) }}° ({{ hvac_state }} mode) by {{ name }}
             data:
               actions:
                 - action: DO_NOTHING
