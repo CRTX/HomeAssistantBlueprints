@@ -10,27 +10,9 @@ blueprint:
           filter:
             domain: climate
 
-    # mode_heat:
-    #   name: Mode Heat
-    #   default: false
-    #   description: Run the automation when the heat is on
-    #   selector:
-    #     boolean:
-    # mode_cool:
-    #   name: Mode Cool
-    #   default: false
-    #   description: Run the automation when the aircondition is on
-    #   selector:
-    #     boolean:
-    # mode_heat_cool:
-    #   name: Mode Heat_cool
-    #   default: false
-    #   description: Run the automation when hvac mode is automatic (heat/cool)
-    #   selector:
-    #     boolean:
     temp:
       name: Trigger Temp
-      description: Temp value to trigger the automation. In `heat` mode the target temp must be above this value to trigger the automation, where as in `cool` mode it must be below.
+      description: Temp value to trigger the automation.
       default: 70
       selector:
         number:
@@ -39,12 +21,13 @@ blueprint:
           unit_of_measurement: "°"
           mode: box
     mode:
-      description: "Select whether to trigger when Heating or Cooling"
+      name: Alert Condition
+      description: "Select whether to trigger when the target temperature goes above or below your trigger temp."
       selector:
         select:
           options:
-            - "heat"
-            - "cool"
+            - "above temperature"
+            - "below temperature"
 
     notify_device:
       name: Device to notify
@@ -70,12 +53,9 @@ action:
       - conditions:
           - condition: or
             conditions:
-              - alias: "Too Hot - Heat"
+              - alias: "Too Hot (Above Temp)"
                 condition: template
-                value_template: "{{ mode=='heat' and (states(climate) == 'heat') and (state_attr(climate, 'temperature') > temp)}}"
-              - alias: "Too Hot - Heat + AC"
-                condition: template
-                value_template: "{{ mode=='heat' and (states(climate) == 'heat_cool') and (state_attr(climate, 'temperature') > temp)}}"
+                value_template: "{{ mode == 'above temperature' and (state_attr(climate, 'temperature') > temp) }}"
         sequence:
           - device_id: !input notify_device
             domain: mobile_app
@@ -84,7 +64,8 @@ action:
               {% set user_id = trigger.to_state.context.user_id %}
               {% set person = states.person | selectattr('attributes.user_id', '==', user_id) | first | default(none) %}
               {% set name = person.attributes.friendly_name if person else 'system' %}
-              🔥️ Heat set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} 🌡️
+              {% set hvac_state = states(climate) %}
+              🔥️ Climate ({{ hvac_state }} mode) set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} 🌡️
             data:
               actions:
                 - action: DO_NOTHING
@@ -98,12 +79,9 @@ action:
       - conditions:
           - condition: or
             conditions:
-              - alias: "Too Cold - AC"
+              - alias: "Too Cold (Below Temp)"
                 condition: template
-                value_template: "{{ mode=='cool' and (states(climate) == 'cool') and (state_attr(climate, 'temperature') < temp)}}"
-              - alias: "Too Cold - AC + Heat"
-                condition: template
-                value_template: "{{ mode=='cool' and (states(climate) == 'heat_cool') and (state_attr(climate, 'temperature') < temp)}}"
+                value_template: "{{ mode == 'below temperature' and (state_attr(climate, 'temperature') < temp) }}"
         sequence:
           - device_id: !input notify_device
             domain: mobile_app
@@ -112,7 +90,8 @@ action:
               {% set user_id = trigger.to_state.context.user_id %}
               {% set person = states.person | selectattr('attributes.user_id', '==', user_id) | first | default(none) %}
               {% set name = person.attributes.friendly_name if person else 'system' %}
-              🥶️ AC set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} ❄️
+              {% set hvac_state = states(climate) %}
+              🥶️ Climate ({{ hvac_state }} mode) set to {{ int(state_attr(climate, 'temperature')) }}° by user: {{ name }} ❄️
             data:
               actions:
                 - action: DO_NOTHING
